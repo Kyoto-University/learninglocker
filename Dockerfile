@@ -56,7 +56,7 @@ COPY ./storage ./storage
 COPY ./.nvmrc ./.nvmrc
 COPY ./.yarnrc ./.yarnrc
 COPY ./.babelrc ./.babelrc
-COPY ./template.env /tmp/template.env
+COPY ./docker_internal.env /tmp/template.env
 COPY --chmod=755 ./docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN yarn install --ignore-engines && \
