@@ -1,0 +1,76 @@
+version: "3.8"
+services:
+#=================================================
+#
+#  LearningLocker
+#
+#=================================================
+  learninglocker:
+    build:
+      context: .
+    ports:
+      - 3000:3000
+    restart: on-failure
+    environment:
+      TZ:
+      APP_SECRET: secret
+      SITE_URL: ${SERVICE_DOMAIN}
+      UI_PORT: 3000
+      API_PORT: 8080
+      MONGODB_PATH: mongodb://learninglocker-mongo:27017/learninglocker_v2
+      REDIS_URL: redis://learninglocker-redis:6379/0
+    depends_on:
+      - learninglocker-mongo
+      - learninglocker-redis
+    networks:
+      - ll_db_net
+    volumes:
+      - ./.volumes/learninglocker/main/app-storage:/opt/learninglocker/storage
+      - ./.volumes/learninglocker/main/ui-logs:/opt/learninglocker/logs
+
+
+  learninglocker-mongo:
+    image: mongo:4.0.20
+    ports:
+      - 27017:27017
+    restart: on-failure
+    environment:
+      TZ:
+    networks:
+      - ll_db_net
+    volumes:
+      - ./.volumes/learninglocker/mongo:/data/db
+    command: --replSet rs0 --bind_ip_all
+
+
+  learninglocker-redis:
+    image: redis:4-alpine
+    restart: on-failure
+    environment:
+      TZ:
+    networks:
+      - ll_internal_net
+
+
+  learninglocker-xapi:
+    image: learninglocker/xapi-service:2.1.10
+    restart: on-failure
+    environment:
+      TZ:
+      APP_SECRET: secret
+      MONGO_URL: mongodb://learninglocker-mongo:27017/learninglocker_v2
+      MONGO_DB: learninglocker_v2
+      REDIS_URL: redis://learninglocker-redis:6379/0
+    depends_on:
+      - learninglocker-mongo
+      - learninglocker-redis
+    networks:
+      - ll_internal_net
+      - ll_db_net
+    volumes:
+      - ./.volumes/xapi-storage:/usr/src/app/storage
+
+
+networks:
+  ll_internal_net:
+  ll_db_net:
